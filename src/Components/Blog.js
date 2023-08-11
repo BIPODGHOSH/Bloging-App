@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { collection, getDocs, doc, setDoc } from "firebase/firestore";
+import { collection, doc, setDoc, onSnapshot,deleteDoc } from "firebase/firestore";
 import { db } from '../firebaseInit';
 
 //Blogging App using Hooks
@@ -8,30 +8,45 @@ export default function Blog() {
     const [blogs, setBlogs] = useState([]);
     const titleRef = useRef(null);
 
-    
+
 
     useEffect(() => {
         titleRef.current.focus(); //initial focus on title when we render first time 
     }, [])
 
-    
+
 
     useEffect(() => {
-        async function fetchData(){
-            const snapShot =await getDocs(collection(db, "blogs"));
-            // console.log(snapShot);
+
+        onSnapshot(collection(db, "blogs"), (snapShot) => {
+            // const source = doc.metadata.hasPendingWrites ? "Local" : "Server";
+            
 
             const blogs = snapShot.docs.map((doc) => {
-                return{
+                return {
                     id: doc.id,
                     ...doc.data()
                 }
             })
             console.log(blogs);
             setBlogs(blogs);
-        }
+            // console.log(source, " data: ", doc.data());
+        });
+        // async function fetchData(){
+        //     const snapShot =await getDocs(collection(db, "blogs"));
+        //     // console.log(snapShot);
 
-        fetchData();
+        //     const blogs = snapShot.docs.map((doc) => {
+        //         return{
+        //             id: doc.id,
+        //             ...doc.data()
+        //         }
+        //     })
+        //     console.log(blogs);
+        //     setBlogs(blogs);
+        // }
+
+        // fetchData();
     }, [])
 
     useEffect(() => {
@@ -50,7 +65,7 @@ export default function Blog() {
 
         //setBlogs([{ title: formData.title, content: formData.content }, ...blogs]);
         // Add a new document with a generated id.
-        const docRef = doc(collection(db,"blogs"));
+        const docRef = doc(collection(db, "blogs"));
         await setDoc(docRef, {
             Title: formData.title,
             Content: formData.content,
@@ -61,9 +76,10 @@ export default function Blog() {
         setFormData({ title: '', content: '' }); //for after form submition clear the preveus form   
     }
 
-    const handelDelete = (id) => {
-        setBlogs(blogs.filter((blog) => id !== blog.id));
+    const handelDelete = async(id) => {
+        // setBlogs(blogs.filter((blog) => id !== blog.id));
         // dispatch({ type: 'REMOVE', index: i })
+        await deleteDoc(doc(db, "blogs", id));
     }
 
     return (
